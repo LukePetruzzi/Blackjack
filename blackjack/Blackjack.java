@@ -132,6 +132,7 @@ public class Blackjack {
     }
 
     private void deal() {
+        System.out.format("\n\n-------------------------------------\n|                                   |\n|            DEALER DEALS           |\n|                                   |\n-------------------------------------\n\n");
         // create new decks if the current one is below 1/4 number of cards
         if (this.decks.size() <= ((double) (NUM_DECKS * 52)) * SHUFFLE_RATIO) {
             this.decks = createNewDecks();
@@ -155,24 +156,23 @@ public class Blackjack {
     }
 
     private void playTurn(Player player) {
-        System.out.format("\n--------------- %s's Turn ---------------\n\n", player.getName());
+        System.out.format("\n--------------- %s's Turn ---------------\n", player.getName());
 
         Hand dealerHand = dealer.getHand();
         Card dUpCard = dealerHand.getCards().get(1);
-        System.out.format("Dealer is showing: 🂠 %s%s%s\n\n", Card.suitToString(dUpCard.getSuit()), 
-                Card.rankToString(dUpCard.getRank()), Card.suitToString(dUpCard.getSuit()));
-
         // player only has one hand, so play it
         int currentHand = 0;
         while (true) {
-            Hand hand = player.getHands().get(currentHand);
-            System.out.format("%s's hand: %s\n\n", player.getName(), hand.toString());
+            System.out.format("\nDealer is showing: 🂠 %s%s%s\n\n", Card.suitToString(dUpCard.getSuit()), 
+                    Card.rankToString(dUpCard.getRank()), Card.suitToString(dUpCard.getSuit()));
 
+            Hand hand = player.getHands().get(currentHand);
+
+            System.out.format("%s's hand: %s\n\n", player.getName(), hand.toString());
 
             String move = this.getValidMove(player, hand);
 
-            if (move == "s") {
-
+            if (move.equals("s")) {
                 return;
             } else if (move == "h") {
 

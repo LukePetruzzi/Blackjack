@@ -20,11 +20,22 @@ public class Hand {
         this.cards.add(card);
     }
 
+    // THIS NEEDS TO HANDLE DOUBLE ACES, AND STUFF LIKE THAT !!!!!!!!!!!!!!!!!
     public int getValue() {
         int value = 0;
         for (int i = 0; i < cards.size(); i++) {
             Card card = cards.get(i);
-            value += card.getRank();
+            int cardVal = card.getRank();
+            // faces equal 10
+            if (cardVal > 11) {
+                cardVal = 10;
+            }
+
+            // handle aces
+            if (cardVal == 1) {
+                cardVal = 11;
+            }
+            value += cardVal;
         }
 
         return value;

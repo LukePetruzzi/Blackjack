@@ -9,6 +9,7 @@ public class Player {
     private String name;
     private int money;
     private ArrayList<Hand> hands;
+    private int currentBet;
 
     public Player(String name, int money) {
         this.name = name;
@@ -21,6 +22,15 @@ public class Player {
 
     public int getMoney() {
         return this.money;
+    }
+
+    public int getCurrentBet() {
+        return this.currentBet;
+    }
+
+    public void setCurrentBet(int bet) {
+        this.money -= bet;
+        this.currentBet = bet;
     }
 
     public void setMoney(int money) {

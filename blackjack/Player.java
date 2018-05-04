@@ -14,6 +14,7 @@ public class Player {
     public Player(String name, int money) {
         this.name = name;
         this.money = money;
+        this.hands = new ArrayList<Hand>();
     }
 
     public String getName() {
@@ -43,5 +44,9 @@ public class Player {
 
     public void setHands(ArrayList<Hand> hands) {
         this.hands = hands;
+    }
+
+    public void addHand(Hand hand) {
+        this.hands.add(hand);
     }
 }

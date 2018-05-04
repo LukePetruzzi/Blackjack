@@ -85,23 +85,23 @@ public class Card {
         case ACE:
             return "Ace";
         case DEUCE:
-            return "Deuce";
+            return "2";
         case THREE:
-            return "Three";
+            return "3";
         case FOUR:
-            return "Four";
+            return "4";
         case FIVE:
-            return "Five";
+            return "5";
         case SIX:
-            return "Six";
+            return "6";
         case SEVEN:
-            return "Seven";
+            return "7";
         case EIGHT:
-            return "Eight";
+            return "8";
         case NINE:
-            return "Nine";
+            return "9";
         case TEN:
-            return "Ten";
+            return "10";
         case JACK:
             return "Jack";
         case QUEEN:
@@ -119,13 +119,13 @@ public class Card {
     public static String suitToString(int suit) {
         switch (suit) {
         case DIAMONDS:
-            return "Diamonds";
+            return "♦";
         case CLUBS:
-            return "Clubs";
+            return "♣";
         case HEARTS:
-            return "Hearts";
+            return "♥";
         case SPADES:
-            return "Spades";
+            return "♠";
         default:
             return null;
         }    
@@ -135,24 +135,43 @@ public class Card {
     	
     	// must run program with -ea flag (java -ea ..) to
     	// use assert statements
+        // assert rankToString(ACE) == "Ace";
+        // assert rankToString(DEUCE) == "Deuce";
+        // assert rankToString(THREE) == "Three";
+        // assert rankToString(FOUR) == "Four";
+        // assert rankToString(FIVE) == "Five";
+        // assert rankToString(SIX) == "Six";
+        // assert rankToString(SEVEN) == "Seven";
+        // assert rankToString(EIGHT) == "Eight";
+        // assert rankToString(NINE) == "Nine";
+        // assert rankToString(TEN) == "Ten";
+        // assert rankToString(JACK) == "Jack";
+        // assert rankToString(QUEEN) == "Queen";
+        // assert rankToString(KING) == "King";
+
+        // assert suitToString(DIAMONDS) == "Diamonds";
+        // assert suitToString(CLUBS) == "Clubs";
+        // assert suitToString(HEARTS) == "Hearts";
+        // assert suitToString(SPADES) == "Spades";
+
         assert rankToString(ACE) == "Ace";
-        assert rankToString(DEUCE) == "Deuce";
-        assert rankToString(THREE) == "Three";
-        assert rankToString(FOUR) == "Four";
-        assert rankToString(FIVE) == "Five";
-        assert rankToString(SIX) == "Six";
-        assert rankToString(SEVEN) == "Seven";
-        assert rankToString(EIGHT) == "Eight";
-        assert rankToString(NINE) == "Nine";
-        assert rankToString(TEN) == "Ten";
+        assert rankToString(DEUCE) == "2";
+        assert rankToString(THREE) == "3";
+        assert rankToString(FOUR) == "4";
+        assert rankToString(FIVE) == "5";
+        assert rankToString(SIX) == "6";
+        assert rankToString(SEVEN) == "7";
+        assert rankToString(EIGHT) == "8";
+        assert rankToString(NINE) == "9";
+        assert rankToString(TEN) == "10";
         assert rankToString(JACK) == "Jack";
         assert rankToString(QUEEN) == "Queen";
         assert rankToString(KING) == "King";
 
-        assert suitToString(DIAMONDS) == "Diamonds";
-        assert suitToString(CLUBS) == "Clubs";
-        assert suitToString(HEARTS) == "Hearts";
-        assert suitToString(SPADES) == "Spades";
+        assert suitToString(DIAMONDS) == "♦";
+        assert suitToString(CLUBS) == "♣";
+        assert suitToString(HEARTS) == "♥";
+        assert suitToString(SPADES) == "♠";
 
     }
 }

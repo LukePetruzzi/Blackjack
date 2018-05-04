@@ -12,10 +12,12 @@ public class Blackjack {
 
     private final int STARTING_MONEY = 1000;
     private final int NUM_DECKS = 6;
+    private final double SHUFFLE_RATIO = 0.25;
 
     private Scanner scanner;
     private List<Player> players;
     private List<Card> decks;
+    private Dealer dealer;
 
     public Blackjack() {
 
@@ -25,6 +27,9 @@ public class Blackjack {
 
         this.scanner = scanner;
 
+        // create a dealer
+        this.dealer = new Dealer();
+
         // make the players
         players = new ArrayList<Player>();
         for (int i = 0; i < playerNames.length; i++) {
@@ -32,20 +37,8 @@ public class Blackjack {
             players.add(player);
         }
 
-        this.decks = new ArrayList<Card>();
-        // make the decks
-        for (int i = 0; i < NUM_DECKS; i++) {
-
-            // use ranks + 1
-            for (int suit = 0; suit < 4; suit++) {
-                // use suit + 1
-                for (int rank = 0; rank < 13; rank++) {
-                    decks.add(new Card(rank + 1, suit + 1));
-                }
-            }
-        }
-        // shuffle the decks
-        this.shuffle();
+        // create a shuffled collection of cards
+        this.decks = createNewDecks();
 
         // for (int i = 0; i < decks.size(); i++) {
         // Card card = decks.get(i);
@@ -70,6 +63,11 @@ public class Blackjack {
         // the dealer deals
         this.deal();
 
+        // each player plays their turn
+        for (int i = 0; i < players.size(); i++) {
+            this.playTurn(players.get(i));
+        }
+
     }
 
     // ********************* GETTERS AND SETTERS *******************************
@@ -89,8 +87,23 @@ public class Blackjack {
         return players.size() > 0;
     }
 
-    private void shuffle() {
-        Collections.shuffle(this.decks);
+    // create a new decks
+    private List<Card> createNewDecks() {
+        List<Card> newDecks = new ArrayList<Card>();
+        // make the decks
+        for (int i = 0; i < NUM_DECKS; i++) {
+
+            // use ranks + 1
+            for (int suit = 0; suit < 4; suit++) {
+                // use suit + 1
+                for (int rank = 0; rank < 13; rank++) {
+                    newDecks.add(new Card(rank + 1, suit + 1));
+                }
+            }
+        }
+        // shuffle the new decks
+        Collections.shuffle(newDecks);
+        return newDecks;
     }
 
     private boolean placeBets() {
@@ -119,8 +132,103 @@ public class Blackjack {
     }
 
     private void deal() {
+        // create new decks if the current one is below 1/4 number of cards
+        if (this.decks.size() <= ((double) (NUM_DECKS * 52)) * SHUFFLE_RATIO) {
+            this.decks = createNewDecks();
+        }
+
+        // deal an initial hand for the dealer and for each of the players
+        for (int i = 0; i < this.players.size() + 1; i++) {
+            Hand hand = new Hand();
+            hand.addCard(this.decks.remove(this.decks.size() - 1));
+            hand.addCard(this.decks.remove(this.decks.size() - 1));
+
+            // add dealer's hand
+            if (i == players.size()) {
+                this.dealer.setHand(hand);
+                continue;
+            }
+
+            Player player = players.get(i);
+            player.addHand(hand);
+        }
+    }
+
+    private void playTurn(Player player) {
+        System.out.format("\n--------------- %s's Turn ---------------\n\n", player.getName());
+
+        Hand dealerHand = dealer.getHand();
+        Card dUpCard = dealerHand.getCards().get(1);
+        System.out.format("Dealer is showing: 🂠 %s%s%s\n\n", Card.suitToString(dUpCard.getSuit()), 
+                Card.rankToString(dUpCard.getRank()), Card.suitToString(dUpCard.getSuit()));
+
+        // player only has one hand, so play it
+        int currentHand = 0;
+        while (true) {
+            Hand hand = player.getHands().get(currentHand);
+            System.out.format("%s's hand: %s\n\n", player.getName(), hand.toString());
+
+
+            String move = this.getValidMove(player, hand);
+
+            if (move == "s") {
+
+                return;
+            } else if (move == "h") {
+
+            } else if (move == "d") {
+
+            } else if (move == "l") {
+
+            }
+        }
 
     }
+
+    // checks if the hand can be split into two hands
+    private boolean canSplit(Hand hand) {
+        if (hand.getCards().size() > 2) {
+            return false;
+        }
+        return hand.getCards().get(0).getRank() == hand.getCards().get(1).getRank();
+    }
+
+    private String getValidMove(Player player, Hand hand) {
+
+        System.out.format("%s, what would you like to do?\n", player.getName());
+
+        // build possible moves
+        StringBuilder possMoves = new StringBuilder();
+        possMoves.append("Stand [S]");
+        // check if the player has blackjack
+        if (!hand.isBlackjack()) {
+            possMoves.append(", Hit [H]");
+            possMoves.append(", Double Down [D]");
+
+            // check if the player can split
+            if (this.canSplit(hand)) {
+                possMoves.append(", Split [L]");
+            }
+        }
+        String moves = possMoves.toString();
+        System.out.format("%s\n\n", possMoves);
+
+        while (true) {
+            String input = this.scanner.next().toLowerCase();
+
+            if ((input.equals("s") && moves.contains("[S]")) || (input.equals("h") && moves.contains("[H]"))
+                    || (input.equals("d") && moves.contains("[D]")) || (input.equals("l") && moves.contains("[L]"))) {
+                return input;
+            }
+
+            System.out.println("Don't make get someone to escort you out, enter a valid move.");
+        }
+    }
+
+    // private void playHand(Player player, Hand hand) {
+
+    // }
+
     // ********************* END PRIVATE HELPER METHODS ************************
 
     // make a game
@@ -133,11 +241,21 @@ public class Blackjack {
         Scanner scanner = new Scanner(System.in);
         int STARTING_MONEY = 1000;
 
-        System.out.format("\nWelcome to Blackjack!\nPlease input money amounts as plain ints, and all other things as strings. Have fun!\n\n\n");
+        System.out.format(
+                "\nWelcome to Blackjack!\nPlease input money and other obvious number amounts as plain ints, and all other things as strings. Consider the inputs sanitized!\nThe House plays with 6 decks, and stands on all 17s.\nBlackjack pays 3:2, and Ace and 10-value pair after a split counts as a non-Blackjack 21. No Double Down on Blackjack. Unlimited Splits.\nThis is a massive table with 10 seats, invite your friends.\nHave fun!\n\n\n");
 
         // // prompt asking how many players at the table
         // System.out.println("How many players at the table?");
         // int numPlayers = scanner.nextInt();
+        // if (numPlayers > 10) {
+        // System.out.println("This table only seats 10, everyone else will have to sit
+        // and watch.\n");
+        // }
+        // if (numPlayers < 10) {
+        // System.out.println("Come back when you exist!\n");
+        // scanner.close();
+        // return;
+        // }
 
         // // get each players name
         // String[] playerNames = new String[numPlayers];
@@ -172,9 +290,12 @@ public class Blackjack {
                 break;
             }
 
-            System.out.format("Would you like to play another round?\n[Y] / [N]\n");
+            System.out.format("Would you like to play another round?\n[Y / N]\n");
             String response = scanner.next();
             if (!response.toLowerCase().equals("y")) {
+
+                // I should make a results printout here!
+
                 System.out.println("See ya next time!");
                 break;
             }

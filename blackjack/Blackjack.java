@@ -51,6 +51,7 @@ public class Blackjack {
 
     // main controller for a round of blackjack, from deal to payout
     public void playRound() {
+        List<Player> players = getPlayers();
 
         // get each player to place a bet or pass on the round
         boolean somebodyBet = this.placeBets();
@@ -82,9 +83,42 @@ public class Blackjack {
         }
     }
 
+    public void getResults() {
+        long TIME_TO_WAIT = 1000L;
+        System.out.format(
+                "\n\n------------------------------------\n|                                  |\n|              RESULTS             |\n|                                  |\n------------------------------------\n\n");
+        for (int i = 0; i < this.players.size(); i++) {
+            System.out.format("%s:\n", players.get(i).getName());
+            System.out.format("\tMoney at start: $%d\n", STARTING_MONEY);
+            System.out.format("\tMoney in pocket: $%d\n", players.get(i).getMoney());
+            int gainloss = players.get(i).getMoney() - STARTING_MONEY;
+            if (gainloss < 0) {
+                if (STARTING_MONEY - Math.abs(gainloss) == 0) {
+                    System.out.format("\t-$%d on the day   (You Suck!)\n", Math.abs(gainloss));
+
+                } else {
+                    System.out.format("\t-$%d on the day\n", Math.abs(gainloss));
+                }
+            } else if (gainloss > 0) {
+                System.out.format("\t+$%d on the day\n", gainloss);
+            } else {
+                System.out.format("\tYou broke even\n");
+            }
+            this.waitForMillis(TIME_TO_WAIT);
+        }
+        this.waitForMillis(TIME_TO_WAIT);
+    }
+
     // ********************* GETTERS AND SETTERS *******************************
     public List<Player> getPlayers() {
-        return this.players;
+        List<Player> validPlayers = new ArrayList<Player>();
+        for (int i = 0; i < players.size(); i++) {
+            Player player = players.get(i);
+            if (player.isPlaying()) {
+                validPlayers.add(player);
+            }
+        }
+        return validPlayers;
     }
 
     public Scanner getScanner() {
@@ -120,15 +154,26 @@ public class Blackjack {
 
     private boolean placeBets() {
         boolean somebodyBet = false;
-        for (int i = 0; i < this.players.size(); i++) {
-            Player player = this.players.get(i);
+        List<Player> players = getPlayers();
+        for (int i = 0; i < players.size(); i++) {
+            Player player = players.get(i);
             System.out.format("\n\n%s, what is your bet?\n", player.getName());
-            System.out.format("MONEY REMAINING: $%d\n", player.getMoney());
-            int bet = scanner.nextInt();
+            System.out.format("MONEY REMAINING: $%d\n$", player.getMoney());
+
+            String betStr = this.sanitizeInt(this.scanner.next());
+            while (betStr.equals("")) {
+                System.out.println("\nYou can't wager with that!");
+                System.out.format("So what is your bet, in moneys?\n$", player.getName());
+                betStr = this.sanitizeInt(this.scanner.next());
+            }
+            int bet = Integer.parseInt(betStr);
+
             if (bet <= 0) {
                 // player doesn't play
                 System.out.println("Have fun on the sideline, LOSER!");
+                player.setIsPlaying(false);
             } else {
+                player.setIsPlaying(true);
                 // check if player has enough money to make the bet
                 if (bet > player.getMoney()) {
                     bet = player.getMoney();
@@ -145,6 +190,8 @@ public class Blackjack {
     }
 
     private void deal() {
+        List<Player> players = getPlayers();
+
         System.out.format(
                 "\n\n-------------------------------------\n|                                   |\n|            DEALER DEALS           |\n|                                   |\n-------------------------------------\n\n");
         // create new decks if the current one is below 1/4 number of cards
@@ -153,7 +200,7 @@ public class Blackjack {
         }
 
         // deal an initial hand for the dealer and for each of the players
-        for (int i = 0; i < this.players.size() + 1; i++) {
+        for (int i = 0; i < players.size() + 1; i++) {
             Hand hand = new Hand();
             hand.addCard(this.decks.remove(this.decks.size() - 1));
             hand.addCard(this.decks.remove(this.decks.size() - 1));
@@ -215,7 +262,7 @@ public class Blackjack {
                     }
 
                     if (i == currentHandIndex) {
-                        handsString.append(String.format("[($%d) %s ]", player.getCurrentBet(i), hand.toString()));
+                        handsString.append(String.format("($%d) [ %s ]", player.getCurrentBet(i), hand.toString()));
                     } else {
                         handsString.append(String.format("($%d) %s", player.getCurrentBet(i), hand.toString()));
                     }
@@ -246,7 +293,8 @@ public class Blackjack {
                     System.out.format("\n($%d) !BUST! %s !BUST!\n\n", player.getCurrentBet(currentHandIndex),
                             currentHand.toString());
                 } else {
-                    System.out.format("\n($%d) %s\n\n", player.getCurrentBet(currentHandIndex), currentHand.toString());
+                    System.out.format("\nResult: ($%d) %s\n\n", player.getCurrentBet(currentHandIndex),
+                            currentHand.toString());
                 }
                 // double down only gets one card
                 currentHandIndex += 1;
@@ -331,12 +379,15 @@ public class Blackjack {
         hands.set(currentHandIndex, newHand1);
         hands.add(currentHandIndex + 1, newHand2);
 
+        // add an equal bet for the new hand
+        player.addCurrentBet(player.getCurrentBet(currentHandIndex));
+
         // deal the left hand a card
         this.hit(player, currentHandIndex);
     }
 
     private void dealerPlays() {
-        long timeToWait = 1500L;
+        long TIME_TO_WAIT = 1300L;
         System.out.format(
                 "\n\n-------------------------------------\n|                                   |\n|            DEALER PLAYS           |\n|                                   |\n-------------------------------------\n\n");
 
@@ -345,31 +396,34 @@ public class Blackjack {
 
         System.out.format("\n🂠 %s%s%s\n\n", Card.suitToString(dUpCard.getSuit()),
                 Card.rankToString(dUpCard.getRank()), Card.suitToString(dUpCard.getSuit()));
-        this.waitForSeconds(timeToWait);
-        System.out.format("%s\n\n", dealerHand.toString());
-        this.waitForSeconds(timeToWait);
+        this.waitForMillis(TIME_TO_WAIT);
         // keep dealing until 17 or bust
         while (true) {
 
-            dealerHand.addCard(this.decks.remove(this.decks.size() - 1));
-            this.dealer.setHand(dealerHand);
-
             if (dealerHand.getValue() >= 17 && dealerHand.getValue() <= 21) {
-                
-                System.out.format("%s\nDealer stands at %d.\n\n", dealerHand.toString(), dealerHand.getValue());
+
+                System.out.format("%s\n\n", dealerHand.toString());
+                this.waitForMillis(TIME_TO_WAIT);
+                System.out.format("Dealer stands at %d.\n\n", dealerHand.getValue());
                 break;
             } else if (dealerHand.getValue() > 21) {
-                System.out.format("\n!BUST! %s !BUST!\n\n", dealerHand.toString());
+                System.out.format("!BUST! %s !BUST!\n\n", dealerHand.toString());
                 break;
             } else {
                 System.out.format("%s\n\n", dealerHand.toString());
             }
 
-            this.waitForSeconds(timeToWait);
+            dealerHand.addCard(this.decks.remove(this.decks.size() - 1));
+            this.dealer.setHand(dealerHand);
+
+            this.waitForMillis(TIME_TO_WAIT);
         }
+        System.out.println("Press [ENTER] to continue to payout");
+        this.scanner.nextLine();
+        this.scanner.nextLine();
     }
 
-    private void waitForSeconds(long millis) {
+    private void waitForMillis(long millis) {
         try {
             TimeUnit.MILLISECONDS.sleep(millis);
         } catch (InterruptedException e) {
@@ -378,11 +432,93 @@ public class Blackjack {
     }
 
     private void payout() {
-        int dealerVal = this.dealer.getHand().getvalue();
+        List<Player> players = getPlayers();
+        long TIME_TO_WAIT = 1000L;
+        System.out.format(
+                "\n\n-------------------------------------\n|                                   |\n|               PAYOUT              |\n|                                   |\n-------------------------------------\n\n");
+        Hand dealerHand = this.dealer.getHand();
+        int dealerVal = dealerHand.getValue();
+        if (dealerVal > 21) {
+            dealerVal = -1;
+            System.out.format("Dealer's hand: !BUST! %s !BUST!\n\n", dealerHand.toString());
+        } else {
+            System.out.format("Dealer's hand: %s\n\n", dealerHand.toString());
+        }
+        this.waitForMillis(TIME_TO_WAIT);
+
         // pay the players or show the outcome
+        for (int i = 0; i < players.size(); i++) {
+            Player player = players.get(i);
+
+            int currentMoney = player.getMoney();
+            int moneyBefore = currentMoney;
+            int betSum = 0;
+            for (int j = 0; j < player.getCurrentBets().size(); j++) {
+                moneyBefore += player.getCurrentBet(j);
+                betSum += player.getCurrentBet(j);
+            }
+
+            System.out.format("%s:\n", player.getName());
+            System.out.format("\tMoney before round: $%d\n", moneyBefore);
+            if (player.getHands().size() > 1) {
+                System.out.format("\tMoney on hands: $%d\n", betSum);
+            } else {
+                System.out.format("\tMoney on hand: $%d\n", betSum);
+            }
+
+            // payout each of the player's hands
+            for (int j = 0; j < player.getHands().size(); j++) {
+                Hand hand = player.getHands().get(j);
+                int playerVal = hand.getValue();
+                int currentBet = player.getCurrentBet(j);
+
+                System.out.format("\t\t");
+                if (playerVal <= 21) {
+                    // blackjack pays 3:2
+                    if (hand.isBlackjack() && player.getHands().size() == 1) {
+                        if (playerVal == dealerVal) {
+                            // blackjack push
+                            currentMoney += currentBet;
+                            System.out.format("BLACKJACK PUSH: %s  +$%d\n", hand.toString(), currentBet);
+                        } else {
+                            // blackjack!
+                            currentMoney += (int) Math.ceil(currentBet + (currentBet * 1.5));
+                            System.out.format("BLACKJACK %s BLACKJACK  +$%d\n", hand.toString(),
+                                    (int) Math.ceil(currentBet + currentBet * 1.5));
+                        }
+                    } else if (playerVal > dealerVal) {
+                        // player win
+                        currentMoney += currentBet * 2;
+                        System.out.format("WIN: %s  +$%d\n", hand.toString(), currentBet * 2);
+                    } else if (playerVal == dealerVal) {
+                        // push
+                        currentMoney += currentBet;
+                        System.out.format("PUSH: %s  +$%d\n", hand.toString(), currentBet);
+                    } else if (playerVal < dealerVal) {
+                        // loss
+                        System.out.format("LOSS: %s  -$%d\n", hand.toString(), currentBet);
+                    }
+                } else {
+                    // player bust
+                    System.out.format("BUST: %s  -$%d\n", hand.toString(), currentBet);
+                }
+
+            }
+            player.setMoney(currentMoney);
+            System.out.format("\tMoney after round: $%d\n", currentMoney);
+            this.waitForMillis(TIME_TO_WAIT);
+        }
     }
 
     // ********************* END PRIVATE HELPER METHODS ************************
+
+    public String sanitizeInt(String input) {
+        input = input.replaceAll("[^0123456789]", "");
+        if (input.length() > 9) {
+            input = input.substring(0, 8);
+        }
+        return input;
+    }
 
     // make a game
     public static void main(String[] args) {
@@ -395,35 +531,45 @@ public class Blackjack {
         int STARTING_MONEY = 1000;
 
         System.out.format(
-                "\nWelcome to Blackjack!\nPlease input money and other obvious number amounts as plain ints, and all other things as strings. Consider the inputs sanitized!\nThe House plays with 6 decks, and stands on all 17s.\nBlackjack pays 3:2, and Ace and 10-value pair after a split counts as a non-Blackjack 21. No Double Down on Blackjack. No Insurance. No Surrenders. Unlimited Splits.\nThis is a massive table with 10 seats, invite your friends.\nHave fun!\n\n\n");
+                "\nWelcome to Blackjack!\nThe House plays with 6 decks, and stands on all 17s.\nBlackjack pays 3:2, and Ace and 10-value pair after a split counts as a non-Blackjack 21.\nNo Double Down on Blackjack. No Insurance. No Surrenders. Unlimited Splits.\nThis is a massive table with 10 seats, invite your friends.\nHave fun!\n");
 
-        // // prompt asking how many players at the table
-        // System.out.println("How many players at the table?");
-        // int numPlayers = scanner.nextInt();
-        // if (numPlayers > 10) {
-        // System.out.println("This table only seats 10, everyone else will have to sit
-        // and watch.\n");
-        // }
-        // if (numPlayers < 10) {
-        // System.out.println("Come back when you exist!\n");
-        // scanner.close();
-        // return;
-        // }
+        // prompt asking how many players at the table
+        System.out.println("\nHow many players at the table?");
 
-        // // get each players name
-        // String[] playerNames = new String[numPlayers];
-        // for (int i = 0; i < numPlayers; i++) {
-        // // ask for name, and make player
-        // System.out.format("Player %d, what is your name?\n", i + 1);
-        // String name = scanner.next();
-        // playerNames[i] = name;
-        // }
+        String numPlayersStr = scanner.next().replaceAll("[^0123456789]", "");
+        while (numPlayersStr.equals("")) {
+            System.out.println("\nThat's not an amount!");
+            System.out.format("So how many are you?\n");
+            numPlayersStr = scanner.next().replaceAll("[^0123456789]", "");
+        }
+        if (numPlayersStr.length() > 9) {
+            numPlayersStr = numPlayersStr.substring(0, 8);
+        }
+        int numPlayers = Integer.parseInt(numPlayersStr);
+        if (numPlayers > 10) {
+            System.out.println("This table only seats 10, everyone else will have to sit and watch.\n");
+            numPlayers = 10;
+        } else if (numPlayers <= 0) {
+            System.out.println("Come back when you exist!\n");
+            scanner.close();
+            return;
+        }
 
-        String[] playerNames = { "Luke", "Jason" };
+        // get each players name
+        String[] playerNames = new String[numPlayers];
+        for (int i = 0; i < numPlayers; i++) {
+            // ask for name, and make player
+            System.out.format("\nPlayer %d, what is your name?\n", i + 1);
+            String name = scanner.next();
+            playerNames[i] = name;
+        }
+
+        // String[] playerNames = { "Luke", "Jason" };
 
         // make a new blackjack game with all players
         Blackjack blackjack = new Blackjack(playerNames, scanner);
 
+        boolean hasPlayedRound = false;
         // while any players have money still, play round
         while (true) {
 
@@ -433,27 +579,50 @@ public class Blackjack {
 
                 if (player.getMoney() == 0) {
                     // removes the current player
-                    System.out.format("%s, get yo broke booty outta here!\n\n", player.getName());
-                    iterator.remove();
+                    System.out.format("\n%s, looks like you just ran out of cash. Get yo broke booty outta here!\n\n",
+                            player.getName());
+                    player.setIsPlaying(false);
                 }
             }
 
             if (blackjack.getPlayers().size() == 0) {
-                System.out.println("That's it, you're all broke. House wins again!");
+                System.out.println("\nThat's it, you're all broke. House wins again!");
                 break;
             }
 
-            System.out.format("Would you like to play another round?\n[Y / N]\n");
-            String response = scanner.next();
-            if (!response.toLowerCase().equals("y")) {
+            if (!hasPlayedRound) {
+                System.out.format("\n\nWould you like to play a round?\n[Y / N]\n");
+                String response = scanner.next().replaceAll("[^YyNn]", "");
+                while (response.equals("")) {
+                    System.out.println("\nWhat was that? I couldn't hear you.");
+                    System.out.format("Are you going to play?\n[Y / N]\n");
+                    response = scanner.next().replaceAll("[^YyNn]", "");
+                }
+                response = response.substring(0, 1);
+                if (!response.toLowerCase().equals("y")) {
+                    System.out.println("\nThanks for wasting my time!");
+                    break;
+                }
+            } else {
+                System.out.format("\n\nWould you like to play another round?\n[Y / N]\n");
+                String response = scanner.next().replaceAll("[^YyNn]", "");
+                while (response.equals("")) {
+                    System.out.println("\nWhat was that? I couldn't hear you.");
+                    System.out.format("Are you playing again?\n[Y / N]\n");
+                    response = scanner.next().replaceAll("[^YyNn]", "");
+                }
+                if (!response.toLowerCase().equals("y")) {
 
-                // I should make a results printout here!
+                    // results on the day
+                    blackjack.getResults();
 
-                System.out.println("See ya next time!");
-                break;
+                    System.out.println("\nSee ya next time!");
+                    break;
+                }
             }
 
             blackjack.playRound();
+            hasPlayedRound = true;
         }
 
         blackjack.getScanner().close();

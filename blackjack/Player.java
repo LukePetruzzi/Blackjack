@@ -10,12 +10,14 @@ public class Player {
     private int money;
     private ArrayList<Hand> hands;
     private ArrayList<Integer> currentBets;
+    private boolean isPlaying;
 
     public Player(String name, int money) {
         this.name = name;
         this.money = money;
         this.hands = new ArrayList<Hand>();
         this.currentBets = new ArrayList<Integer>();
+        this.isPlaying = true;
     }
 
     public String getName() {
@@ -60,5 +62,13 @@ public class Player {
 
     public void addHand(Hand hand) {
         this.hands.add(hand);
+    }
+
+    public void setIsPlaying(boolean playing) {
+        this.isPlaying = playing;
+    }
+
+    public boolean isPlaying() {
+        return this.isPlaying;
     }
 }

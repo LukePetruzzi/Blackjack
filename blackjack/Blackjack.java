@@ -132,7 +132,8 @@ public class Blackjack {
     }
 
     private void deal() {
-        System.out.format("\n\n-------------------------------------\n|                                   |\n|            DEALER DEALS           |\n|                                   |\n-------------------------------------\n\n");
+        System.out.format(
+                "\n\n-------------------------------------\n|                                   |\n|            DEALER DEALS           |\n|                                   |\n-------------------------------------\n\n");
         // create new decks if the current one is below 1/4 number of cards
         if (this.decks.size() <= ((double) (NUM_DECKS * 52)) * SHUFFLE_RATIO) {
             this.decks = createNewDecks();
@@ -161,28 +162,65 @@ public class Blackjack {
         Hand dealerHand = dealer.getHand();
         Card dUpCard = dealerHand.getCards().get(1);
         // player only has one hand, so play it
-        int currentHand = 0;
+        int currentHandIndex = 0;
+
         while (true) {
+            // the player has played their hands, the turn is over
+            if (currentHandIndex == player.getHands().size()) {
+                break;
+            }
+            // the player has split their cards, and is on another hand. Deal them a card
+            if (currentHandIndex != 0) {
+                this.hit(player, currentHandIndex);
+            }
+
+
             System.out.format("\nDealer is showing: 🂠 %s%s%s\n\n", Card.suitToString(dUpCard.getSuit()), 
                     Card.rankToString(dUpCard.getRank()), Card.suitToString(dUpCard.getSuit()));
 
-            Hand hand = player.getHands().get(currentHand);
+            Hand currentHand = player.getHands().get(currentHandIndex);
 
-            System.out.format("%s's hand: %s\n\n", player.getName(), hand.toString());
+            // build the string to print, showing all the players hands
+            StringBuilder handsString = new StringBuilder();
+            for (int i = 0; i < player.getHands().size(); i++) {
+                if (player.getHands().size() == 1) {
+                    handsString.append(String.format("%s's hand: %s", player.getName(), currentHand.toString()));
+                } else {
+                    Hand hand = player.getHands().get(i);
+                    if (i == 0) {
+                        handsString.append(String.format("%s's hands: ", player.getName()));
+                    } else {
+                        handsString.append(", ");
+                    }
 
-            String move = this.getValidMove(player, hand);
+                    if (i == currentHandIndex) {
+                        handsString.append(String.format("[ %s ]", hand.toString()));
+                    } else {
+                        handsString.append(String.format("%s", hand.toString()));
+                    }
+                }
+            }
+            handsString.append("\n\n");
+            System.out.print(handsString.toString());
+
+            String move = this.getValidMove(player, currentHand);
 
             if (move.equals("s")) {
-                return;
-            } else if (move == "h") {
-
-            } else if (move == "d") {
-
-            } else if (move == "l") {
-
+                // advance the hand index
+                currentHandIndex += 1;
+            } else if (move.equals("h")) {
+                currentHand = this.hit(player, currentHandIndex);
+                // check for a bust
+                if (currentHand.getValue() > 21) {
+                    System.out.format("\n!BUST! %s !BUST!\n\n", currentHand.toString());
+                    currentHandIndex += 1;
+                }
+            } else if (move.equals("d")) {
+                currentHand = this.doubleDown(player, currentHandIndex);
+            } else if (move.equals("l")) {
+                // advance current hand index, etc
             }
         }
-
     }
 
     // checks if the hand can be split into two hands
@@ -201,13 +239,17 @@ public class Blackjack {
         StringBuilder possMoves = new StringBuilder();
         possMoves.append("Stand [S]");
         // check if the player has blackjack
-        if (!hand.isBlackjack()) {
+        if (!hand.isBlackjack() && hand.getValue() != 21) {
             possMoves.append(", Hit [H]");
-            possMoves.append(", Double Down [D]");
 
-            // check if the player can split
-            if (this.canSplit(hand)) {
-                possMoves.append(", Split [L]");
+            // check if the player has the money to double down or split
+            if (player.getCurrentBet() <= player.getMoney()) {
+                possMoves.append(", Double Down [D]");
+
+                // check if the hand can be split
+                if (this.canSplit(hand)) {
+                    possMoves.append(", Split [L]");
+                }
             }
         }
         String moves = possMoves.toString();
@@ -225,9 +267,18 @@ public class Blackjack {
         }
     }
 
-    // private void playHand(Player player, Hand hand) {
+    private Hand hit(Player player, int currentHandIndex) {
+        ArrayList<Hand> hands = player.getHands();
+        Hand hand = hands.get(currentHandIndex);
+        hand.addCard(this.decks.remove(this.decks.size() - 1));
+        hands.set(currentHandIndex, hand);
+        player.setHands(hands);
+        return hand;
+    }
 
-    // }
+    private Hand doubleDown(Player player, int currentHandIndex) {
+
+    }
 
     // ********************* END PRIVATE HELPER METHODS ************************
 

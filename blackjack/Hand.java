@@ -11,7 +11,7 @@ public class Hand {
     public Hand() {
         this.cards = new ArrayList<Card>();
     }
-    
+
     public List<Card> getCards() {
         return this.cards;
     }
@@ -20,22 +20,34 @@ public class Hand {
         this.cards.add(card);
     }
 
-    // THIS NEEDS TO HANDLE DOUBLE ACES, AND STUFF LIKE THAT !!!!!!!!!!!!!!!!!
     public int getValue() {
         int value = 0;
+        int numAces = 0;
         for (int i = 0; i < cards.size(); i++) {
             Card card = cards.get(i);
             int cardVal = card.getRank();
             // faces equal 10
-            if (cardVal > 11) {
+            if (cardVal >= 10) {
                 cardVal = 10;
             }
 
-            // handle aces
+            // skip aces, handle separately
             if (cardVal == 1) {
-                cardVal = 11;
+                numAces += 1;
+                continue;
             }
             value += cardVal;
+        }
+
+        // handle aces
+        if (numAces > 0) {
+            int valLeft = 21 - value;
+            
+            if (valLeft - 11 >= numAces - 1) {
+                value += (11 + numAces - 1);
+            } else {
+                value += numAces;
+            }
         }
 
         return value;

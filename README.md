@@ -3,7 +3,7 @@
 This is a command line game of Blackjack! I wrote everything from scratch except the Card object, which I found online and made a couple tweaks to.
 
 To play:
-1) Clone the directory 
+1) Clone the repo 
 2) cd above the package
 3) run this command: java blackjack/Blackjack
 

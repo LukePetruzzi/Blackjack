@@ -40,13 +40,6 @@ public class Blackjack {
 
         // create a shuffled collection of cards
         this.decks = createNewDecks();
-
-        // for (int i = 0; i < decks.size(); i++) {
-        // Card card = decks.get(i);
-        // System.out.format("Card %d is: %s of %s\n", i,
-        // Card.rankToString(card.getRank()),
-        // Card.suitToString(card.getSuit()));
-        // }
     }
 
     // main controller for a round of blackjack, from deal to payout
@@ -58,7 +51,7 @@ public class Blackjack {
 
         // don't play the round if nobody bet anything
         if (!somebodyBet) {
-            System.out.println("I'll be here if anyone wants to play...");
+            System.out.println("\nI'll be here if anyone wants to play...");
             return;
         }
 
@@ -109,6 +102,23 @@ public class Blackjack {
         this.waitForMillis(TIME_TO_WAIT);
     }
 
+    public boolean allPlayersAreBroke() {
+        for (int i = 0; i < this.players.size(); i++) {
+            if (this.players.get(i).getMoney() != 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public void resetEligiblePlayers() {
+        for (int i = 0; i < this.players.size(); i++) {
+            if (this.players.get(i).getMoney() > 0) {
+                this.players.get(i).setIsPlaying(true);
+            }
+        }
+    }
+
     // ********************* GETTERS AND SETTERS *******************************
     public List<Player> getPlayers() {
         List<Player> validPlayers = new ArrayList<Player>();
@@ -127,11 +137,6 @@ public class Blackjack {
     // ********************* END GETTERS AND SETTERS ***************************
 
     // ********************* PRIVATE HELPER METHODS ****************************
-
-    // ensure there are players that are still in the game
-    private boolean playersStillHaveMoney(List<Player> players) {
-        return players.size() > 0;
-    }
 
     // create a new decks
     private List<Card> createNewDecks() {
@@ -217,6 +222,7 @@ public class Blackjack {
     }
 
     private void playTurn(Player player) {
+        if (!player.isPlaying()) return;
         System.out.format("\n--------------- %s's Turn ---------------\n", player.getName());
 
         Hand dealerHand = dealer.getHand();
@@ -531,7 +537,7 @@ public class Blackjack {
         int STARTING_MONEY = 1000;
 
         System.out.format(
-                "\nWelcome to Blackjack!\nThe House plays with 6 decks, and stands on all 17s.\nBlackjack pays 3:2, and Ace and 10-value pair after a split counts as a non-Blackjack 21.\nNo Double Down on Blackjack. No Insurance. No Surrenders. Unlimited Splits.\nThis is a massive table with 10 seats, invite your friends.\nHave fun!\n");
+                "\nWelcome to Blackjack!\nThe House plays with 6 decks, and stands on all 17s.\nBlackjack pays 3:2, Ace and 10-value pair after a split is a non-Blackjack 21.\nNo Double Down on Blackjack, Unlimited Splits, No Insurance, No Surrenders.\nThis is a massive table with 10 seats, invite your friends.\nHave fun!\n");
 
         // prompt asking how many players at the table
         System.out.println("\nHow many players at the table?");
@@ -572,6 +578,8 @@ public class Blackjack {
         boolean hasPlayedRound = false;
         // while any players have money still, play round
         while (true) {
+            // reset the players that didn't bet last round to "playing"
+            blackjack.resetEligiblePlayers();
 
             // remove players that have no money
             for (Iterator<Player> iterator = blackjack.getPlayers().iterator(); iterator.hasNext();) {
@@ -585,7 +593,7 @@ public class Blackjack {
                 }
             }
 
-            if (blackjack.getPlayers().size() == 0) {
+            if (blackjack.allPlayersAreBroke()) {
                 System.out.println("\nThat's it, you're all broke. House wins again!");
                 break;
             }
